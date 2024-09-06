@@ -13,6 +13,8 @@ namespace ApiB.Controllers
     [ApiController]
     public class PeliculaController : ControllerBase
     {
+        private const string BaseUrlApiA = "https://localhost:7252/api/Peliculas";
+
         [HttpPost]
         public IActionResult Post([FromBody] Pelicula pelicula)
         {

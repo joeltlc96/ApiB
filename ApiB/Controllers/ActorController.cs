@@ -3,6 +3,8 @@ using ApiB.Model;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.SqlClient;
+using System.Text.Json;
+using System.Text;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,8 +14,11 @@ namespace ApiB.Controllers
     [ApiController]
     public class ActorController : ControllerBase
     {
+        private const string BaseUrlApiA = "https://localhost:7252/api/Actors";
+
         [HttpPost]
-        public IActionResult Post([FromBody] Actor actor)
+        [HttpPost]
+        public async Task<ActionResult> Post([FromBody] Actor actor)
         {
             using (SqlConnection connection = ConexionDB.abrirConexion())
             {
@@ -30,8 +35,42 @@ namespace ApiB.Controllers
                     cmd.ExecuteNonQuery();
                 }
             }
+
+            // Llamada a la API A
+            await PostActorApiAAsync(actor);
+
             return Ok("Actor insertado con éxito");
         }
+
+        private async Task PostActorApiAAsync(Actor actor)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                string apiAUrl = "https://localhost:7252/api/Actors"; // URL de API A
+
+                string contenidoJson = JsonSerializer.Serialize(actor);
+                var contenidoPeticion = new StringContent(contenidoJson, Encoding.UTF8, "application/json");
+
+                try
+                {
+                    HttpResponseMessage respuestaHttp = await client.PostAsync(apiAUrl, contenidoPeticion);
+
+                    if (respuestaHttp.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("Actor enviado exitosamente a API A.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Error al enviar a API A: {respuestaHttp.StatusCode}");
+                    }
+                }
+                catch (HttpRequestException e)
+                {
+                    Console.WriteLine($"Excepción al enviar a API A: {e.Message}");
+                }
+            }
+        }
+
 
         [HttpGet]
         public IActionResult Get()
